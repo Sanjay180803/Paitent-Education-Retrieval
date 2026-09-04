@@ -1,0 +1,17 @@
+# Regenerable caches -- don't commit scraped HTTP responses or the vector index
+data/raw/
+qdrant_storage/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# OS/editor
+.DS_Store
+.vscode/
+
+# Secrets -- if you ever add an NCBI_API_KEY or similar to a .env file
+.env

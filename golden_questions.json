@@ -1,0 +1,172 @@
+[
+  {
+    "question": "what does diabetes mean",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": ["diabetes"]
+  },
+  {
+    "question": "what is hypertension and how does it affect my body",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": ["hypertension", "high blood pressure", "blood pressure"]
+  },
+  {
+    "question": "what is COPD",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": ["copd", "chronic obstructive"]
+  },
+  {
+    "question": "what is chronic kidney disease",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": ["kidney", "renal"]
+  },
+  {
+    "question": "what does Medicare Part B cover",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": ["medicare.gov", "medicare part b", "part b"]
+  },
+  {
+    "question": "what are my rights under HIPAA",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": ["hhs.gov", "hipaa"]
+  },
+  {
+    "question": "what health insurance protections exist for me",
+    "audience": "patient",
+    "jurisdiction": "CA",
+    "expect_grounded": true,
+    "expect_keywords_any": ["insurance.ca.gov"]
+  },
+  {
+    "question": "what health insurance protections exist for me",
+    "audience": "patient",
+    "jurisdiction": "TX",
+    "expect_grounded": true,
+    "expect_keywords_any": ["tdi.texas.gov"]
+  },
+  {
+    "question": "what health insurance protections exist for me",
+    "audience": "patient",
+    "jurisdiction": "FL",
+    "expect_grounded": true,
+    "expect_keywords_any": ["myfloridacfo.com"]
+  },
+  {
+    "question": "chronic kidney disease management guidelines and treatment",
+    "audience": "clinician",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": ["pubmed.ncbi.nlm.nih.gov"]
+  },
+  {
+    "question": "first-line pharmacological treatment for hypertension",
+    "audience": "clinician",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": ["pubmed.ncbi.nlm.nih.gov"]
+  },
+  {
+    "question": "what is the capital of France",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": []
+  },
+  {
+    "question": "how do I file my income taxes this year",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": []
+  },
+  {
+    "question": "best recipe for chocolate chip cookies",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": []
+  },
+  {
+    "question": "who won the world series last year",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": []
+  },
+  {
+    "question": "what is diabetes insipidus and what causes it",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "note": "Diabetes insipidus is a real but entirely different, unrelated condition (kidney/ADH disorder, not blood sugar). Corpus only has diabetes MELLITUS content -- the word 'diabetes' will cause strong lexical overlap in both BM25 and possibly vector similarity, but grounding on mellitus content here would give a factually wrong answer to a real medical question. This is the single hardest and most safety-relevant case in the set."
+  },
+  {
+    "question": "what is diabetes mellitus type 3c and how is it diagnosed",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "note": "Type 3c is a real, less-common diabetes subtype (pancreatogenic) not covered by our general type 1/2/gestational MedlinePlus content. Tests whether the system distinguishes 'diabetes' the broad topic from a specific subtype it doesn't actually have information on -- overconfident grounding here means giving incomplete/wrong diagnostic info."
+  },
+  {
+    "question": "does my car insurance cover medical bills after an accident",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "note": "Shares 'insurance' + 'medical' vocabulary with the health-insurance corpus but is a completely different insurance domain (auto, not health)."
+  },
+  {
+    "question": "how much does car insurance cost in California",
+    "audience": "patient",
+    "jurisdiction": "CA",
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "note": "Combines the jurisdiction=CA filter (which legitimately surfaces CA health-insurance content) with a completely different insurance domain (auto). Tests whether jurisdiction match alone is enough to wrongly ground an off-topic question."
+  },
+  {
+    "question": "how do I claim a home office tax deduction",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "note": "Same failure family as the income-tax question that originally scored 0.609 -- tax vocabulary overlaps with ACA premium tax credit language in the insurance corpus."
+  },
+  {
+    "question": "what is GDPR and how does it protect my personal data",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "note": "Data-privacy vocabulary overlaps with HIPAA, but GDPR is a different (EU) regulation entirely absent from the corpus."
+  },
+  {
+    "question": "what are treatment options for rheumatoid arthritis",
+    "audience": "clinician",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "note": "Clinical-register phrasing ('treatment options', 'management') matches the STYLE of existing PubMed clinician content even though rheumatoid arthritis itself was never fetched -- tests whether register/style similarity alone causes false grounding on a wrong disease."
+  },
+  {
+    "question": "what is COBRA continuation coverage and how do I qualify",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "note": "COBRA is a real, legitimate US health-insurance term (job-loss continuation coverage) -- sounds squarely in-domain, but was never actually fetched into this corpus. Tests whether topical plausibility alone causes overconfident grounding on a genuinely uncovered topic."
+  }
+]
+

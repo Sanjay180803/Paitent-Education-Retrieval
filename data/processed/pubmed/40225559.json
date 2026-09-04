@@ -1,0 +1,11 @@
+{
+  "source": "pubmed",
+  "pmid": "40225559",
+  "url": "https://pubmed.ncbi.nlm.nih.gov/40225559/",
+  "title": "Artificial intelligence in chronic kidney disease management: a scoping review.",
+  "abstract": "Rationale: Chronic kidney disease (CKD) is a major public health problem worldwide associated with cardiovascular disease, renal failure, and mortality. To effectively address this growing burden, innovative solutions to management are urgently required. We conducted a scoping review to identify key use cases in which artificial intelligence (AI) could be leveraged for improving management of CKD. Additionally, we examined the challenges faced by AI in CKD management, proposed potential solutions to overcome these barriers. Methods: We reviewed 41 articles published between 2014-2024 which examined various AI techniques including machine learning (ML) and deep learning (DL), unsupervised clustering, digital twin, natural language processing (NLP) and large language models (LLMs) in CKD management. We focused on four areas: early detection, risk stratification and prediction, treatment recommendations and patient care and communication. Results: We identified 41 articles published between 2014-2024 that assessed image-based DL models for early detection (n = 6), ML models for risk stratification and prediction (n = 14) and treatment recommendations (n = 4), and NLP and LLMs for patient care and communication (n = 17). Key challenges in integrating AI models into healthcare include technical issues such as data quality and access, model accuracy, and interpretability, alongside adoption barriers like workflow integration, user training, and regulatory approval. Conclusions: There is tremendous potential of integrating AI into clinical care of CKD patients to enable early detection, prediction, and improved patient outcomes. Collaboration among healthcare providers, researchers, regulators, and industries is crucial to developing robust protocols that ensure compliance with legal standards, while minimizing risks and maintaining patient safety.",
+  "pub_year": "2025",
+  "audience": "clinician",
+  "fetched_at": "2026-09-03T01:28:26Z",
+  "query_term": "chronic kidney disease management"
+}
