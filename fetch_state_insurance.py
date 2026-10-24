@@ -5,40 +5,38 @@ No unified API across states — this is genuine page-by-page HTML scraping,
 and every state's site structure is different. Start with 3 states (enough
 to prove jurisdiction-precedence logic), expand later.
 
-You MUST fill in real URLs for each state's consumer guide pages yourself —
-the ones below are placeholders showing the expected shape. Search
-"<state> department of insurance consumer guide health insurance" to find
-the real pages, then check_robots_allowed() before adding each one.
+Pages are listed in config/state_pages.toml. To add a state, add a
+[[page]] entry there (no code change needed).
 
 Run:
-  pip install requests beautifulsoup4 --break-system-packages
-  python fetch_state_insurance.py
+  python fetch_state_insurance.py                       # all pages in the config
+  python fetch_state_insurance.py --state CA --state TX  # a subset
+  python fetch_state_insurance.py --config my_pages.toml
 """
 
+import argparse
 import json
+import tomllib
 from pathlib import Path
 
 from bs4 import BeautifulSoup
 from common import RateLimiter, fetch_with_cache, check_robots_allowed
 
-# Fill these in with real, verified URLs per state before running.
-STATE_PAGES = [
-    {
-        "url": "https://www.insurance.ca.gov/01-consumers/110-health/20-look/index.cfm",
-        "state": "CA",
-        "topic": "health_insurance_consumer_guide",
-    },
-    {
-        "url": "https://www.tdi.texas.gov/pubs/consumer/cb005.html",
-        "state": "TX",
-        "topic": "health_insurance_consumer_guide",
-    },
-    {
-        "url": "https://myfloridacfo.com/division/ica/fullcoverage/health-life",
-        "state": "FL",
-        "topic": "health_insurance_consumer_guide",
-    },
-]
+DEFAULT_CONFIG = Path(__file__).resolve().parent / "config" / "state_pages.toml"
+
+
+def load_state_pages(config_path: Path, states: list[str] | None = None) -> list[dict]:
+    with config_path.open("rb") as f:
+        pages = tomllib.load(f).get("page", [])
+    for page in pages:
+        missing = {"state", "topic", "url"} - page.keys()
+        if missing:
+            raise ValueError(f"{config_path}: page entry {page} is missing {sorted(missing)}")
+    if states:
+        wanted = {st.upper() for st in states}
+        pages = [p for p in pages if p["state"].upper() in wanted]
+    return pages
+
 
 OUT_DIR = Path.cwd() / "data" / "processed" / "state_insurance"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -74,9 +72,14 @@ def fetch_state_page(page: dict, limiter: RateLimiter) -> dict | None:
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
+    parser.add_argument("--state", action="append", help="only fetch this state (repeatable)")
+    args = parser.parse_args()
+
+    STATE_PAGES = load_state_pages(args.config, args.state)
     if not STATE_PAGES:
-        print("STATE_PAGES is empty — add real, verified URLs before running.")
-        print("See the module docstring for how to find them.")
+        print(f"No pages to fetch from {args.config}.")
         return
 
     limiter = RateLimiter(min_interval=1.5)

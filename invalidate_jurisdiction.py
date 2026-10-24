@@ -21,6 +21,7 @@ Typical workflow after updating a source:
 import sys
 
 from query_cache import QueryCache
+from settings import Settings
 
 VALID_JURISDICTIONS = {"federal", "CA", "TX", "FL"}  # extend as you add states
 
@@ -35,7 +36,7 @@ def main():
     if jurisdiction not in VALID_JURISDICTIONS and jurisdiction.upper() not in VALID_JURISDICTIONS:
         print(f"[warn] '{jurisdiction}' isn't in the known list ({VALID_JURISDICTIONS}), proceeding anyway")
 
-    cache = QueryCache()
+    cache = QueryCache.from_url(Settings().redis_url)
     old_gen = cache.get_generation(jurisdiction)
     new_gen = cache.bump_generation(jurisdiction)
     print(f"Bumped '{jurisdiction}' generation: {old_gen} -> {new_gen}")

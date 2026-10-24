@@ -1,0 +1,20 @@
+# State Department of Insurance pages ingested by fetch_state_insurance.py.
+#
+# To add a state: find its official consumer guide page, confirm robots.txt
+# allows it, and add a [[page]] entry. Then re-run the pipeline and
+# `python invalidate_jurisdiction.py <STATE>`.
+
+[[page]]
+state = "CA"
+topic = "health_insurance_consumer_guide"
+url = "https://www.insurance.ca.gov/01-consumers/110-health/20-look/index.cfm"
+
+[[page]]
+state = "TX"
+topic = "health_insurance_consumer_guide"
+url = "https://www.tdi.texas.gov/pubs/consumer/cb005.html"
+
+[[page]]
+state = "FL"
+topic = "health_insurance_consumer_guide"
+url = "https://myfloridacfo.com/division/ica/fullcoverage/health-life"

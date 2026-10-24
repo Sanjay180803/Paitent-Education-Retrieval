@@ -132,7 +132,20 @@ This is documented as a known, accepted limitation rather than tuned away:
 a medical-domain-specific reranker or an NLI-based entity-disambiguation
 step would be the real fix, and is out of scope for this iteration.
 
-## Setup
+## Quick start (Docker Compose)
+
+```bash
+docker compose up --build
+curl -X POST localhost:8000/query -H 'content-type: application/json' \
+     -d '{"question": "does Medicare cover insulin", "jurisdiction": "CA"}'
+```
+
+This starts Redis, a Qdrant server, a one-shot indexer that builds the
+index from the committed `data/processed/` files, and the API. Runtime
+settings (Qdrant/Redis URLs, gate thresholds) are environment variables
+documented in `settings.py`.
+
+## Setup (without Docker)
 
 ```powershell
 pip install -r requirements.txt
@@ -160,7 +173,7 @@ docker run -p 6379:6379 redis
 python fetch_medlineplus.py
 python fetch_pubmed.py
 python fetch_cms.py
-python fetch_state_insurance.py    # edit STATE_PAGES with real URLs first
+python fetch_state_insurance.py    # pages listed in config/state_pages.toml
 python load_manual_pages.py        # for sources that block scripted fetches (see script docstring)
 
 # 2. Build the unified corpus, chunk it, embed and index

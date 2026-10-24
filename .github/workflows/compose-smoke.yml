@@ -1,0 +1,49 @@
+name: Compose smoke test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  compose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and start the stack
+        run: docker compose up --build -d
+      - name: Wait for the API
+        run: |
+          for i in $(seq 1 90); do
+            curl -sf localhost:8000/health && exit 0
+            sleep 5
+          done
+          docker compose logs --tail 80
+          exit 1
+      - name: Grounded answer with citations
+        run: |
+          curl -sf -X POST localhost:8000/query -H 'content-type: application/json' \
+            -d '{"question": "what is chronic obstructive pulmonary disease", "audience": "patient"}' > out.json
+          python3 - <<'PY'
+          import json
+          d = json.load(open("out.json"))
+          assert d["answer_grounded"], d
+          assert d["sources"] and all(s["url"] for s in d["sources"]), d
+          print("grounded with", len(d["sources"]), "cited sources")
+          PY
+      - name: Out-of-scope question is refused
+        run: |
+          curl -sf -X POST localhost:8000/query -H 'content-type: application/json' \
+            -d '{"question": "best chocolate chip cookie recipe"}' > out.json
+          python3 -c "import json; d=json.load(open('out.json')); assert not d['answer_grounded'], d; print('refused')"
+      - name: Second identical query is a cache hit
+        run: |
+          for i in 1 2; do
+            curl -sf -X POST localhost:8000/query -H 'content-type: application/json' \
+              -d '{"question": "what is chronic obstructive pulmonary disease"}' > out$i.json
+          done
+          python3 -c "import json; d=json.load(open('out2.json')); assert d['cache_hit'], d; print('cache hit')"
+      - name: Logs on failure
+        if: failure()
+        run: docker compose logs --tail 200
