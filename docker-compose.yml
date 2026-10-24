@@ -1,0 +1,56 @@
+# Full stack: Redis cache, Qdrant server, a one-shot indexer, and the API.
+#
+#   docker compose up --build
+#   curl -X POST localhost:8000/query -H 'content-type: application/json' \
+#        -d '{"question": "does Medicare cover insulin", "jurisdiction": "CA"}'
+#
+# The indexer builds the corpus from the committed data/processed/ files,
+# chunks it, embeds it into Qdrant, and exits. The API starts after it
+# finishes successfully. Models download on first run and are cached in
+# the hf-cache volume.
+
+x-app: &app
+  build: .
+  environment:
+    QDRANT_URL: http://qdrant:6333
+    REDIS_URL: redis://redis:6379/0
+    CHUNKS_FILE: /app/data_corpus/chunks.jsonl
+    HF_HOME: /cache/hf
+    FASTEMBED_CACHE_PATH: /cache/fastembed
+  volumes:
+    - corpus:/app/data_corpus
+    - hf-cache:/cache
+
+services:
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    volumes:
+      - qdrant-data:/qdrant/storage
+    ports: ["6333:6333"]
+
+  indexer:
+    <<: *app
+    command: sh -c "python build_corpus.py && python chunk_corpus.py && python embed_and_index.py"
+    depends_on: [qdrant]
+    restart: "no"
+
+  api:
+    <<: *app
+    ports: ["8000:8000"]
+    depends_on:
+      redis:
+        condition: service_healthy
+      indexer:
+        condition: service_completed_successfully
+
+volumes:
+  corpus:
+  qdrant-data:
+  hf-cache:

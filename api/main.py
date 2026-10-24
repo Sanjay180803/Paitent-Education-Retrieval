@@ -40,21 +40,20 @@ import sys
 from pathlib import Path
 from typing import Literal, Optional
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastembed import TextEmbedding
 from pydantic import BaseModel, Field
 from qdrant_client import QdrantClient, models
+from qdrant_client.http.exceptions import ResponseHandlingException, UnexpectedResponse
 
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))  # so `import hybrid_search` finds the sibling module
 from hybrid_search import BM25Index, load_chunks, reciprocal_rank_fusion  # noqa: E402
 from query_cache import QueryCache  # noqa: E402
 from reranker import Reranker  # noqa: E402
+from settings import COLLECTION_NAME, EMBEDDING_MODEL, Settings, qdrant_client  # noqa: E402
 
-QDRANT_STORAGE = PROJECT_ROOT / "qdrant_storage"
-CHUNKS_FILE = PROJECT_ROOT / "data_corpus" / "chunks.jsonl"
-COLLECTION_NAME = "patient_education_policy"
-EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"
+SETTINGS = Settings()
 
 # Two-stage gating. See reranker.py's module docstring for the full story:
 # vector cosine similarity cannot distinguish "diabetes insipidus" from
@@ -67,11 +66,8 @@ EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"
 # any BM25/fusion/reranking work at all -- this threshold only needs to
 # catch the EASY cases (capital of France, cookie recipes), so it's set
 # low and conservative.
-VECTOR_FLOOR = 0.4
+VECTOR_FLOOR = SETTINGS.vector_floor
 
-# Stage 2 (precise gate): everything that survives Stage 1 gets BM25-fused
-# and reranked by the cross-encoder, which CAN read query+candidate jointly
-# and catch the disease-name-overlap failure mode. This is the real gate.
 # Stage 2 (precise gate): everything that survives Stage 1 gets BM25-fused
 # and reranked by the cross-encoder, which CAN read query+candidate jointly
 # and catch the disease-name-overlap failure mode. This is the real gate.
@@ -92,7 +88,7 @@ VECTOR_FLOOR = 0.4
 #     the real fix, out of scope for this iteration.)
 # 0.01 sits in the clean gap between refusals and genuine answers, giving
 # the best overall tradeoff given the above.
-CROSS_ENCODER_THRESHOLD = 0.01
+CROSS_ENCODER_THRESHOLD = SETTINGS.cross_encoder_threshold
 
 TOP_K = 5
 CANDIDATE_POOL_SIZE = 20  # how many each of vector/BM25 contribute before fusion
@@ -108,17 +104,17 @@ _bm25_index: Optional[BM25Index] = None
 _cache: Optional[QueryCache] = None
 _reranker: Optional[Reranker] = None
 
-CACHE_TTL_SECONDS = 3600
+CACHE_TTL_SECONDS = SETTINGS.cache_ttl_seconds
 
 
 @app.on_event("startup")
 def load_resources():
     global _embedder, _client, _bm25_index, _cache, _reranker
     _embedder = TextEmbedding(model_name=EMBEDDING_MODEL)
-    _client = QdrantClient(path=str(QDRANT_STORAGE))
-    chunks = load_chunks(CHUNKS_FILE)
+    _client = qdrant_client(SETTINGS)
+    chunks = load_chunks(SETTINGS.chunks_file)
     _bm25_index = BM25Index(chunks)
-    _cache = QueryCache()  # defaults to localhost:6379; see query_cache.py
+    _cache = QueryCache.from_url(SETTINGS.redis_url) if SETTINGS.cache_enabled else None
     _reranker = Reranker()  # downloads ms-marco-MiniLM-L-6-v2 once, then cached locally
 
 
@@ -201,12 +197,17 @@ def query(req: QueryRequest) -> QueryResponse:
 
     # --- Vector search (semantic) -----------------------------------------
     query_vector = list(_embedder.embed([req.question]))[0].tolist()
-    vector_hits = _client.query_points(
-        collection_name=COLLECTION_NAME,
-        query=query_vector,
-        query_filter=query_filter,
-        limit=CANDIDATE_POOL_SIZE,
-    ).points
+    # Unlike Redis, Qdrant IS a correctness dependency: without it there is
+    # nothing to ground an answer in, so fail with 503 rather than guessing.
+    try:
+        vector_hits = _client.query_points(
+            collection_name=COLLECTION_NAME,
+            query=query_vector,
+            query_filter=query_filter,
+            limit=CANDIDATE_POOL_SIZE,
+        ).points
+    except (ResponseHandlingException, UnexpectedResponse, ConnectionError, OSError) as e:
+        raise HTTPException(status_code=503, detail=f"vector store unavailable: {type(e).__name__}")
 
     # --- Stage 1: cheap floor, rejects the easy/obvious non-matches -------
     if not vector_hits or vector_hits[0].score < VECTOR_FLOOR:

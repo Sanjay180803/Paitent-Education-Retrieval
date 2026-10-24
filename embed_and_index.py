@@ -10,11 +10,8 @@ Two ways to run Qdrant:
   A) Local, on-disk, no server needed (default here) -- fine for
      development and for this portfolio project.
 
-  B) A real Qdrant server via Docker, closer to how you'd actually deploy
-     this (and matches the containerized-services pattern in your other
-     projects):
-       docker run -p 6333:6333 -v ./qdrant_storage:/qdrant/storage qdrant/qdrant
-     then set USE_SERVER = True below.
+  B) A Qdrant server (e.g. the `qdrant` service in docker-compose.yml):
+       QDRANT_URL=http://localhost:6333 python embed_and_index.py
 
 First run will download the embedding model (~67MB) from HuggingFace and
 cache it locally -- only happens once.
@@ -31,22 +28,17 @@ from pathlib import Path
 from fastembed import TextEmbedding
 from qdrant_client import QdrantClient, models
 
-PROJECT_ROOT = Path.cwd()
-CHUNKS_FILE = PROJECT_ROOT / "data_corpus" / "chunks.jsonl"
-QDRANT_STORAGE = PROJECT_ROOT / "qdrant_storage"
+from settings import COLLECTION_NAME, EMBEDDING_MODEL, Settings, qdrant_client
 
-COLLECTION_NAME = "patient_education_policy"
-EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"  # 384-dim, ~67MB, good general-purpose model
+SETTINGS = Settings()
+CHUNKS_FILE = SETTINGS.chunks_file
+QDRANT_STORAGE = SETTINGS.qdrant_path
+USE_SERVER = SETTINGS.qdrant_url is not None
 EMBED_BATCH_SIZE = 32
-
-USE_SERVER = False
-SERVER_URL = "http://localhost:6333"
 
 
 def get_client() -> QdrantClient:
-    if USE_SERVER:
-        return QdrantClient(url=SERVER_URL)
-    return QdrantClient(path=str(QDRANT_STORAGE))
+    return qdrant_client(SETTINGS)
 
 
 def load_chunks() -> list[dict]:

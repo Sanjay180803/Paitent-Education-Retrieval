@@ -26,15 +26,15 @@ enough (~80MB) to run on CPU at interactive latency for a candidate pool
 this size.
 """
 
-from typing import Optional
-
-from sentence_transformers import CrossEncoder
-
 MODEL_NAME = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 
 
 class Reranker:
     def __init__(self, model_name: str = MODEL_NAME):
+        # Imported here so modules that import Reranker (the API, tests)
+        # don't pull in torch until a reranker is actually constructed.
+        from sentence_transformers import CrossEncoder
+
         self.model = CrossEncoder(model_name)
 
     def rerank(self, question: str, candidates: list[dict], text_key: str = "text") -> list[dict]:

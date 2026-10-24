@@ -72,6 +72,10 @@ class QueryCache:
         # connection for production use.
         self.client = client or redis.Redis(host=host, port=port, decode_responses=True)
 
+    @classmethod
+    def from_url(cls, url: str) -> "QueryCache":
+        return cls(client=redis.Redis.from_url(url, decode_responses=True))
+
     # --- Generation counters -------------------------------------------
 
     def get_generation(self, jurisdiction: str) -> int:
