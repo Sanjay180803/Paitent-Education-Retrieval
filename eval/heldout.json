@@ -1,0 +1,533 @@
+[
+  {
+    "question": "how does insulin move glucose into my cells",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "medlineplus.gov/diabetes"
+    ]
+  },
+  {
+    "question": "why is having too much sugar in my blood dangerous over time",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "medlineplus.gov/diabetes"
+    ]
+  },
+  {
+    "question": "is diabetes mellitus the same thing as diabetes",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "medlineplus.gov/diabetes"
+    ]
+  },
+  {
+    "question": "what do the two numbers in a blood pressure reading mean",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "medlineplus.gov/highbloodpressure"
+    ]
+  },
+  {
+    "question": "what is systolic pressure",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "medlineplus.gov/highbloodpressure"
+    ]
+  },
+  {
+    "question": "does high blood pressure cause symptoms I would notice",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "medlineplus.gov/highbloodpressure"
+    ]
+  },
+  {
+    "question": "how is high blood pressure diagnosed",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "medlineplus.gov/highbloodpressure"
+    ]
+  },
+  {
+    "question": "what lung diseases make it harder to breathe over time",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "medlineplus.gov/copd"
+    ]
+  },
+  {
+    "question": "what happens to the air sacs in my lungs with COPD",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "medlineplus.gov/copd"
+    ]
+  },
+  {
+    "question": "what causes chronic obstructive pulmonary disease",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "medlineplus.gov/copd"
+    ]
+  },
+  {
+    "question": "what can trigger an asthma attack",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "medlineplus.gov/asthma"
+    ]
+  },
+  {
+    "question": "why do I wheeze and feel tightness in my chest",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "medlineplus.gov/asthma"
+    ]
+  },
+  {
+    "question": "is asthma a long-term lung disease",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "medlineplus.gov/asthma"
+    ]
+  },
+  {
+    "question": "what do my kidneys actually do",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "medlineplus.gov/chronickidneydisease"
+    ]
+  },
+  {
+    "question": "what are the most common causes of kidney damage",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "medlineplus.gov/chronickidneydisease"
+    ]
+  },
+  {
+    "question": "how would I know if I have kidney disease",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "medlineplus.gov/chronickidneydisease"
+    ]
+  },
+  {
+    "question": "how is depression different from just feeling sad",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "medlineplus.gov/depression"
+    ]
+  },
+  {
+    "question": "what is persistent depressive disorder",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "medlineplus.gov/depression"
+    ]
+  },
+  {
+    "question": "what are the symptoms of major depression",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "medlineplus.gov/depression"
+    ]
+  },
+  {
+    "question": "what BMI counts as obesity",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "medlineplus.gov/obesity"
+    ]
+  },
+  {
+    "question": "what is the difference between being overweight and having obesity",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "medlineplus.gov/obesity"
+    ]
+  },
+  {
+    "question": "what raises my risk of obesity",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "medlineplus.gov/obesity"
+    ]
+  },
+  {
+    "question": "what are the four valves in the heart",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "medlineplus.gov/heartvalvediseases"
+    ]
+  },
+  {
+    "question": "what happens if a heart valve does not close properly",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "medlineplus.gov/heartvalvediseases"
+    ]
+  },
+  {
+    "question": "does Medicare Part A cover hospice care",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "parts-of-medicare"
+    ]
+  },
+  {
+    "question": "which part of Medicare helps pay for prescription drugs",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "parts-of-medicare"
+    ]
+  },
+  {
+    "question": "does Medicare help pay for a wheelchair or walker",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "parts-of-medicare"
+    ]
+  },
+  {
+    "question": "does Medicare cover yearly wellness visits and vaccines",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "parts-of-medicare"
+    ]
+  },
+  {
+    "question": "how can I find out if Medicare will cover a test my doctor ordered",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "medicare.gov/coverage"
+    ]
+  },
+  {
+    "question": "what affects how much I will owe for a Medicare covered service",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "medicare.gov/coverage"
+    ]
+  },
+  {
+    "question": "how do I file a complaint if my health privacy rights were violated",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "hhs.gov/hipaa"
+    ]
+  },
+  {
+    "question": "how must my health information be kept private and secure",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "hhs.gov/hipaa"
+    ]
+  },
+  {
+    "question": "how does health coverage through my employer work",
+    "audience": "patient",
+    "jurisdiction": "CA",
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "insurance.ca.gov"
+    ]
+  },
+  {
+    "question": "what types of health coverage can I buy",
+    "audience": "patient",
+    "jurisdiction": "CA",
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "insurance.ca.gov"
+    ]
+  },
+  {
+    "question": "how do I get health insurance if I can't get it through my job",
+    "audience": "patient",
+    "jurisdiction": "TX",
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "tdi.texas.gov"
+    ]
+  },
+  {
+    "question": "how expensive can getting sick be without health coverage",
+    "audience": "patient",
+    "jurisdiction": "TX",
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "tdi.texas.gov"
+    ]
+  },
+  {
+    "question": "what is a health maintenance organization",
+    "audience": "patient",
+    "jurisdiction": "FL",
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "myfloridacfo.com"
+    ]
+  },
+  {
+    "question": "where can I learn about long-term care insurance",
+    "audience": "patient",
+    "jurisdiction": "FL",
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "myfloridacfo.com"
+    ]
+  },
+  {
+    "question": "GINA global strategy for asthma management and prevention",
+    "audience": "clinician",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "pubmed.ncbi.nlm.nih.gov/18166595"
+    ]
+  },
+  {
+    "question": "control-based versus severity-based asthma guidelines",
+    "audience": "clinician",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "pubmed.ncbi.nlm.nih.gov/24162904",
+      "pubmed.ncbi.nlm.nih.gov/18166595"
+    ]
+  },
+  {
+    "question": "managing asthma during pregnancy",
+    "audience": "clinician",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "pubmed.ncbi.nlm.nih.gov/29475603"
+    ]
+  },
+  {
+    "question": "treatment recommendations for COPD exacerbations",
+    "audience": "clinician",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "pubmed.ncbi.nlm.nih.gov/28298398"
+    ]
+  },
+  {
+    "question": "summary of the 2024 GOLD report for COPD",
+    "audience": "clinician",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "pubmed.ncbi.nlm.nih.gov/38941078"
+    ]
+  },
+  {
+    "question": "ESH/ESC guideline blood pressure treatment targets",
+    "audience": "clinician",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "pubmed.ncbi.nlm.nih.gov/29080798"
+    ]
+  },
+  {
+    "question": "antihypertensive treatment in frail older adults",
+    "audience": "clinician",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "pubmed.ncbi.nlm.nih.gov/37594718",
+      "pubmed.ncbi.nlm.nih.gov/39688187"
+    ]
+  },
+  {
+    "question": "systolic blood pressure targets for patients over 65",
+    "audience": "clinician",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "pubmed.ncbi.nlm.nih.gov/39688187",
+      "pubmed.ncbi.nlm.nih.gov/37594718"
+    ]
+  },
+  {
+    "question": "heart failure management in nursing home residents",
+    "audience": "clinician",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "pubmed.ncbi.nlm.nih.gov/29960616"
+    ]
+  },
+  {
+    "question": "device-based therapies for heart failure",
+    "audience": "clinician",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "pubmed.ncbi.nlm.nih.gov/39110080"
+    ]
+  },
+  {
+    "question": "brexanolone and other treatments for postpartum depression",
+    "audience": "clinician",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "pubmed.ncbi.nlm.nih.gov/32584616"
+    ]
+  },
+  {
+    "question": "using EEG to predict antidepressant treatment response",
+    "audience": "clinician",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "pubmed.ncbi.nlm.nih.gov/35961967"
+    ]
+  },
+  {
+    "question": "buprenorphine and opioid analgesia in chronic kidney disease",
+    "audience": "clinician",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "pubmed.ncbi.nlm.nih.gov/32941189"
+    ]
+  },
+  {
+    "question": "consensus definitions for metabolic bariatric surgery",
+    "audience": "clinician",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "pubmed.ncbi.nlm.nih.gov/37999891"
+    ]
+  },
+  {
+    "question": "intranasal treatments for allergic rhinitis",
+    "audience": "clinician",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "pubmed.ncbi.nlm.nih.gov/41324154"
+    ]
+  },
+  {
+    "question": "gut microbiota dysbiosis in depression",
+    "audience": "clinician",
+    "jurisdiction": null,
+    "expect_grounded": true,
+    "expect_keywords_any": [
+      "pubmed.ncbi.nlm.nih.gov/36963238"
+    ]
+  },
+  {
+    "question": "what is the capital of Japan",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": []
+  },
+  {
+    "question": "how do I reset my wifi router",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": []
+  },
+  {
+    "question": "what time does the post office close",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": []
+  },
+  {
+    "question": "how many ounces are in a cup",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": []
+  },
+  {
+    "question": "who wrote Pride and Prejudice",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": []
+  },
+  {
+    "question": "what is the stock price of Apple today",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": []
+  }
+]

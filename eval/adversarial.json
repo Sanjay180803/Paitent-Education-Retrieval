@@ -1,0 +1,239 @@
+[
+  {
+    "question": "what is pulmonary hypertension",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "why": "shares 'hypertension'; different disease, not in corpus"
+  },
+  {
+    "question": "what is hypotension and why is my blood pressure low",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "why": "opposite condition"
+  },
+  {
+    "question": "what is diabetes insipidus treated with desmopressin",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "why": "name overlap with diabetes mellitus"
+  },
+  {
+    "question": "what is renal cell carcinoma",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "why": "kidney cancer, not CKD"
+  },
+  {
+    "question": "how are kidney stones removed",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "why": "kidney topic not in corpus"
+  },
+  {
+    "question": "what is cystic fibrosis",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "why": "lung disease not in corpus"
+  },
+  {
+    "question": "what is celiac disease",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "why": "digestive disease not in corpus"
+  },
+  {
+    "question": "what is schizophrenia",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "why": "mental health, not depression"
+  },
+  {
+    "question": "what is anorexia nervosa",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "why": "weight-adjacent, not obesity"
+  },
+  {
+    "question": "what is chronic fatigue syndrome",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "why": "'chronic' overlap"
+  },
+  {
+    "question": "how do I treat a sinus infection",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "why": "nasal, not allergic rhinitis"
+  },
+  {
+    "question": "what is an aortic aneurysm",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "why": "'aortic' overlap with heart valves"
+  },
+  {
+    "question": "what does pet insurance cover for a cat with diabetes",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "why": "veterinary docs are clinician-only; patient query must not use them"
+  },
+  {
+    "question": "how do I file a car insurance claim after an accident",
+    "audience": "patient",
+    "jurisdiction": "TX",
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "why": "TX page menu lists auto insurance"
+  },
+  {
+    "question": "does homeowners insurance cover water damage",
+    "audience": "patient",
+    "jurisdiction": "TX",
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "why": "TX page menu lists home insurance"
+  },
+  {
+    "question": "how does the CCPA protect my personal data",
+    "audience": "patient",
+    "jurisdiction": "CA",
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "why": "privacy law, not HIPAA"
+  },
+  {
+    "question": "what are my rights under FERPA for school records",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "why": "privacy law, not HIPAA"
+  },
+  {
+    "question": "how do I renew my passport",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "why": "government service, not health"
+  },
+  {
+    "question": "how do I apply for unemployment benefits",
+    "audience": "patient",
+    "jurisdiction": "FL",
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "why": "state benefit, not insurance guide"
+  },
+  {
+    "question": "what does travel insurance cover if my flight is cancelled",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "why": "insurance, not health"
+  },
+  {
+    "question": "guidelines for management of acute appendicitis",
+    "audience": "clinician",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "why": "no surgical guidelines in corpus"
+  },
+  {
+    "question": "sepsis fluid resuscitation guidelines",
+    "audience": "clinician",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": []
+  },
+  {
+    "question": "pediatric migraine prophylaxis guidelines",
+    "audience": "clinician",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": []
+  },
+  {
+    "question": "treatment of chronic hepatitis C",
+    "audience": "clinician",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": []
+  },
+  {
+    "question": "what is the recommended dose of amoxicillin for strep throat",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "why": "drug dosing not in corpus"
+  },
+  {
+    "question": "can I take ibuprofen with my blood pressure medication",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "why": "drug interaction not in corpus"
+  },
+  {
+    "question": "what is long COVID",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "why": "not in corpus"
+  },
+  {
+    "question": "what is gout and what causes it",
+    "audience": "patient",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "why": "joint disease not in corpus"
+  },
+  {
+    "question": "what is asthma in horses",
+    "audience": "clinician",
+    "jurisdiction": null,
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "why": "veterinary, not in corpus"
+  },
+  {
+    "question": "how do I appeal a denied workers compensation claim",
+    "audience": "patient",
+    "jurisdiction": "CA",
+    "expect_grounded": false,
+    "expect_keywords_any": [],
+    "why": "insurance-adjacent, not health coverage guide"
+  }
+]

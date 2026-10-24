@@ -215,7 +215,7 @@ reranker.py                  Cross-encoder reranking
 query_cache.py               Redis caching with generation/schema-versioned keys
 invalidate_jurisdiction.py   CLI to bump a jurisdiction's cache generation
 api/main.py                  FastAPI serving layer
-golden_questions.json        Eval harness golden question set
+eval/                        Dev, held-out and adversarial question sets
 run_eval.py                  Eval harness: hit@k, MRR, violation checks, threshold sweep data
 docs/threshold_sweep.png     Confidence-gate threshold sweep chart
 ```

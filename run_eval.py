@@ -30,9 +30,18 @@ because some source titles/URLs (e.g. MedlinePlus slugs) weren't verifiable
 ahead of time -- see the comment in golden_questions.json if you need to
 adjust keywords after inspecting your actual corpus.
 
+Question sets (eval/):
+  dev.json          23 questions used to choose CROSS_ENCODER_THRESHOLD.
+  heldout.json      60 questions written after the threshold was fixed;
+                    never used for tuning.
+  adversarial.json  30 topically adjacent out-of-scope questions; never
+                    used for tuning.
+See eval/README.md for the protocol.
+
 Run (with the API server already running):
-  python run_eval.py
-  python run_eval.py --url http://localhost:8000 --golden-set golden_questions.json
+  python run_eval.py                                   # all three sets
+  python run_eval.py --set eval/heldout.json
+  python run_eval.py --json-out eval/results/latest.json
 """
 
 import argparse
@@ -41,7 +50,8 @@ from pathlib import Path
 
 import requests
 
-DEFAULT_GOLDEN_SET = Path(__file__).parent / "golden_questions.json"
+EVAL_DIR = Path(__file__).parent / "eval"
+DEFAULT_SETS = [EVAL_DIR / "dev.json", EVAL_DIR / "heldout.json", EVAL_DIR / "adversarial.json"]
 DEFAULT_API_URL = "http://localhost:8000"
 
 
@@ -105,25 +115,78 @@ def evaluate_question(api_url: str, item: dict) -> dict:
     return result
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--url", default=DEFAULT_API_URL)
-    parser.add_argument("--golden-set", default=str(DEFAULT_GOLDEN_SET))
-    args = parser.parse_args()
+def summarize(results: list[dict]) -> dict:
+    """Aggregate metrics for one question set. A question counts as correct
+    when an answerable one is grounded AND a top-5 source matches, or an
+    out-of-scope one is refused."""
+    in_scope = [r for r in results if r["expect_grounded"]]
+    out_scope = [r for r in results if not r["expect_grounded"]]
 
-    golden_set = load_golden_set(Path(args.golden_set))
-    print(f"Loaded {len(golden_set)} golden questions from {args.golden_set}\n")
+    def rate(xs, key):
+        return round(sum(bool(x[key]) for x in xs) / len(xs), 4) if xs else None
 
+    correct = sum(1 for r in in_scope if r["actual_grounded"] and r["hit"]) + sum(
+        1 for r in out_scope if r["correct_refusal_behavior"]
+    )
+    return {
+        "n": len(results),
+        "n_answerable": len(in_scope),
+        "n_out_of_scope": len(out_scope),
+        "accuracy": round(correct / len(results), 4) if results else None,
+        "hit_at_5": rate(in_scope, "hit"),
+        "mrr": round(sum(r["reciprocal_rank"] for r in in_scope) / len(in_scope), 4) if in_scope else None,
+        "wrongly_refused": sum(1 for r in in_scope if not r["actual_grounded"]),
+        "refusal_accuracy": rate(out_scope, "correct_refusal_behavior"),
+        "jurisdiction_violations": sum(r["jurisdiction_violation"] for r in in_scope),
+        "audience_violations": sum(r["audience_violation"] for r in in_scope),
+    }
+
+
+def run_set(api_url: str, path: Path) -> list[dict] | None:
+    golden_set = load_golden_set(path)
+    print(f"\n{'#' * 70}\n# {path.name}: {len(golden_set)} questions\n{'#' * 70}\n")
     results = []
     for item in golden_set:
         try:
-            results.append(evaluate_question(args.url, item))
+            results.append(evaluate_question(api_url, item))
         except requests.exceptions.ConnectionError:
-            print(f"[error] Could not reach {args.url} -- is the API server running?")
-            return
+            print(f"[error] Could not reach {api_url} -- is the API server running?")
+            return None
         except Exception as e:
             print(f"[error] question '{item['question']}' failed: {e}")
+    report(results)
+    return results
 
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--url", default=DEFAULT_API_URL)
+    parser.add_argument("--set", dest="sets", action="append", type=Path,
+                        help="question set to run (repeatable; default: all of eval/)")
+    parser.add_argument("--json-out", type=Path, help="write per-set metrics and per-question results here")
+    args = parser.parse_args()
+
+    out = {}
+    for path in args.sets or DEFAULT_SETS:
+        results = run_set(args.url, path)
+        if results is None:
+            raise SystemExit(1)
+        out[path.stem] = {"metrics": summarize(results), "results": results}
+
+    print(f"\n{'=' * 70}\nSUMMARY\n{'=' * 70}")
+    for name, block in out.items():
+        m = block["metrics"]
+        print(f"  {name:12s} n={m['n']:3d}  accuracy={m['accuracy']}  hit@5={m['hit_at_5']}  "
+              f"MRR={m['mrr']}  refusal_acc={m['refusal_accuracy']}  "
+              f"wrongly_refused={m['wrongly_refused']}  jurisdiction_violations={m['jurisdiction_violations']}")
+
+    if args.json_out:
+        args.json_out.parent.mkdir(parents=True, exist_ok=True)
+        args.json_out.write_text(json.dumps(out, indent=2))
+        print(f"\nWrote {args.json_out}")
+
+
+def report(results: list[dict]) -> None:
     in_scope = [r for r in results if r["expect_grounded"]]
     out_of_scope = [r for r in results if not r["expect_grounded"]]
 

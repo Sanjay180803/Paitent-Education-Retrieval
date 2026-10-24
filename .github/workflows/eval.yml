@@ -1,0 +1,63 @@
+name: Retrieval evaluation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CACHE_ENABLED: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -r requirements.txt
+      - name: Build index from committed data
+        run: |
+          python build_corpus.py
+          python chunk_corpus.py
+          python embed_and_index.py
+      - name: Start API
+        run: |
+          nohup python -m uvicorn api.main:app --port 8000 > api.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf localhost:8000/health && exit 0; sleep 3; done
+          cat api.log; exit 1
+      - name: Run evaluation
+        run: python run_eval.py --json-out eval-results.json | tee eval-output.txt
+      - name: Publish summary
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json, os
+          d = json.load(open("eval-results.json"))
+          lines = ["| set | n | accuracy | hit@5 | MRR | refusal acc | wrongly refused | jurisdiction violations |",
+                   "|---|---:|---:|---:|---:|---:|---:|---:|"]
+          for name, block in d.items():
+              m = block["metrics"]
+              lines.append(f"| {name} | {m['n']} | {m['accuracy']} | {m['hit_at_5']} | {m['mrr']} | "
+                           f"{m['refusal_accuracy']} | {m['wrongly_refused']} | {m['jurisdiction_violations']} |")
+              wrong = [r["question"] + (" [refused]" if r["expect_grounded"] and not r["actual_grounded"] else
+                                        " [miss]" if r["expect_grounded"] else " [answered]")
+                       for r in block["results"]
+                       if (r["expect_grounded"] and not (r["actual_grounded"] and r["hit"]))
+                       or (not r["expect_grounded"] and not r["correct_refusal_behavior"])]
+              print(f"::notice title=eval {name}::" + json.dumps(m))
+              print(f"::notice title=eval {name} errors::" + " | ".join(wrong)[:4000])
+          open(os.environ["GITHUB_STEP_SUMMARY"], "a").write("\n".join(lines) + "\n")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eval-results
+          path: |
+            eval-results.json
+            eval-output.txt
