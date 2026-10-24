@@ -1,136 +1,107 @@
-# Patient Education & Policy Q&A Gateway
+# Patient Education & Policy Retrieval Gateway
 
-A retrieval-augmented backend that answers patient questions about medical
-conditions, Medicare, HIPAA, and state-specific insurance rules — tailored
-to the asker's audience (patient vs. clinician), scoped to their
-jurisdiction, and always grounded in cited sources rather than free
-generation.
+A retrieval backend that answers patient and clinician questions about
+chronic conditions, Medicare, HIPAA and state health-insurance rules. It
+returns cited source excerpts scoped to the asker's jurisdiction and
+audience, or refuses when the corpus does not support an answer. There is
+no LLM generation step: every answer is retrieved text with its source.
 
-The engineering focus is **retrieval infrastructure correctness**, not
-prompt engineering: jurisdiction-safe filtering, hybrid search, cache
-invalidation without races, and a two-stage confidence gate built from
-real evaluation data rather than guessed thresholds.
+![CI](https://github.com/Sanjay180803/Paitent-Education-Retrieval/actions/workflows/tests.yml/badge.svg)
 
-## Why this exists
+## Problem
 
-Naive RAG in a healthcare/policy context is dangerous in specific,
-nameable ways: a jurisdiction-mismatched answer (California rules served
-to a Texas resident), a stale cached answer served after a policy update,
-or a confidently-wrong answer to a question the corpus doesn't actually
-cover (mistaking "diabetes insipidus" for "diabetes mellitus" because both
-share the word "diabetes"). This project treats each of those as a
-distinct engineering problem with a specific, testable fix — not something
-a bigger LLM call would paper over.
+Three failure modes matter in a health-policy retrieval system:
+
+1. **Wrong jurisdiction**: California rules returned to a Texas resident.
+2. **Stale cache**: an answer cached before a policy update served after it.
+3. **Confident near-misses**: a question the corpus does not cover answered
+   with something topically similar (*diabetes insipidus* answered with
+   *diabetes mellitus* content).
+
+The design addresses each one separately, and the evaluation measures each
+one separately.
 
 ## Architecture
 
-```
-Ingestion (5 sources)          MedlinePlus, PubMed (NCBI E-utilities),
-                                CMS/Medicare, HHS/HIPAA, state insurance depts
-        │
-        ▼
-Corpus consolidation           Normalizes differing field names/schemas
-        │                      into one common record shape
-        ▼
-Paragraph-aware chunking       Never splits mid-sentence; preserves
-        │                      section structure for policy/coverage tables
-        ▼
-Embedding + Qdrant index       FastEmbed (ONNX, no GPU) + local/server Qdrant,
-        │                      metadata-filtered at the ANN query layer
-        ▼
-Hybrid retrieval (RRF)         Vector (semantic) + BM25 (exact-term) fused
-        │                      via Reciprocal Rank Fusion
-        ▼
-Cross-encoder reranking        Second precision pass on the fused candidate
-        │                      pool -- catches lexical-overlap traps a
-        │                      bi-encoder structurally cannot
-        ▼
-Two-stage confidence gate      Cheap vector floor, then cross-encoder
-        │                      threshold tuned from real eval data
-        ▼
-Redis cache (generation-       Jurisdiction- and schema-versioned cache
-  and schema-versioned)        keys -- invalidation is a single atomic
-        │                      INCR, not a race-prone delete
-        ▼
-FastAPI /query endpoint        Returns grounded answer + full source
-                                citations, or an explicit refusal
+```mermaid
+flowchart TD
+    S[MedlinePlus · PubMed · Medicare/HHS · CA/TX/FL insurance departments] --> B[build_corpus.py<br/>normalize schemas]
+    B --> C[chunk_corpus.py<br/>paragraph-aware chunks]
+    C --> E[embed_and_index.py<br/>bge-small → Qdrant, payload indexes]
+    Q[POST /query] --> K{Redis cache<br/>schema + generation keyed}
+    K -- hit --> R[response]
+    K -- miss --> V[Vector search<br/>jurisdiction + audience filter in the ANN query]
+    V --> G1{top cosine ≥ 0.4?}
+    G1 -- no --> X[refuse]
+    G1 -- yes --> F[BM25 + vector<br/>Reciprocal Rank Fusion]
+    F --> CE[Cross-encoder rerank<br/>ms-marco-MiniLM-L-6-v2]
+    CE --> G2{top score ≥ 0.01?}
+    G2 -- no --> X
+    G2 -- yes --> R
 ```
 
-## Key engineering decisions
+## Design decisions
 
-**Jurisdiction filtering happens inside the vector-DB query itself**
-(`query_filter` passed to Qdrant's ANN search), not as a post-hoc filter on
-already-retrieved results. A federal-only or wrong-state chunk never
-enters the candidate set — this is what makes the "no California content
-in a Texas-scoped answer" property structurally guaranteed rather than
-merely usually-true. Confirmed with a direct test asserting `CA` never
-appears in a `TX`-scoped result.
+**Jurisdiction filtering inside the vector query.** The jurisdiction and
+audience filter is passed to Qdrant's ANN search, so out-of-scope chunks
+never enter the candidate set. BM25 scores the whole corpus and then
+filters, so filtering never truncates results. Tested for CA, TX and FL,
+including a question that names California asked from Texas.
 
-**Hybrid retrieval (BM25 + vector, fused via Reciprocal Rank Fusion)**
-because a bi-encoder embedding blurs exact terms (drug names, plan codes)
-into general topic vectors. Verified with a controlled experiment: pure
-vector search ranked a lisinopril-specific document *below* a generic
-overview (0.83 vs. 0.55 cosine similarity); BM25 fusion corrected it into
-a tie for first place.
+**Hybrid retrieval.** Embeddings blur exact terms such as drug names and
+plan codes. BM25 and vector rankings are fused with Reciprocal Rank Fusion
+(k = 60).
 
-**Cache invalidation via generation counters, not a reverse document
-index.** The obvious design — track which cached answers used which
-source document, delete them on update — creates a real race: a request
-that starts before an update but finishes writing its cache entry after
-invalidation has already run leaves a permanently stale answer with no one
-left to delete it. Generation counters sidestep this entirely: every cache
-key embeds the jurisdiction's current generation number, so a data update
-is one atomic `INCR`. After that instant, every new request computes a
-*different* key — reading stale data isn't unlikely, it's structurally
-impossible, without any delete-and-hope-you-caught-it-in-time logic.
+**Cache invalidation by generation counter.** Each cache key embeds a
+generation number for every jurisdiction it depends on (federal plus the
+state). Re-indexing a jurisdiction is a single `INCR`; after it, requests
+compute new keys and old entries are never read again. A reverse index of
+"which cached answers used which document" would race: a request that
+started before an update could write its stale answer after the
+invalidation ran.
 
-**Cache keys are also schema-versioned**, not just data-versioned. A code
-deploy (e.g. adding the cross-encoder reranking stage) doesn't change any
-jurisdiction's underlying data, so generation counters alone don't catch
-it — old cache entries would be replayed verbatim after a deploy, silently
-serving pre-deploy behavior. `SCHEMA_VERSION` is baked into every key for
-exactly this reason; bumping it orphans old-format entries the same
-structural way a generation bump orphans stale data.
+**Schema version in the cache key.** A code change (for example adding the
+reranker) changes answers without changing data. `SCHEMA_VERSION` in the
+key orphans entries written by older code.
 
-**A two-stage confidence gate**, because a single cosine-similarity
-threshold provably cannot separate "topically similar" from "the correct
-answer." The eval harness caught this directly: "what is diabetes
-insipidus" scored *higher* on vector cosine similarity (0.749) than
-several genuinely-answerable baseline questions, because a bi-encoder
-embeds query and candidate independently and cannot represent that
-"insipidus" and "mellitus" name different diseases. A cross-encoder, which
-reads the (query, candidate) pair jointly, catches this — confirmed by an
-end-to-end test where both questions produced *identical* vector scores
-but were correctly told apart post-rerank.
+**Two-stage confidence gate.** A cheap cosine floor rejects clearly
+unrelated questions before reranking. The cross-encoder threshold (0.01)
+was chosen on the dev set to avoid refusing vaguely phrased genuine
+questions, whose scores go as low as 0.012.
 
-## What the eval harness found (and didn't paper over)
+**Failure behavior.** Redis is optional: if it is down, queries are
+computed without caching. Qdrant is required: if it is down the API
+returns 503.
 
-23 golden questions (11 answerable, 12 adversarial), each of the
-adversarial ones designed to expose a specific failure mode — not just
-"obviously off-topic" but topically-adjacent-and-wrong (car insurance vs.
-health insurance, GDPR vs. HIPAA, income tax vs. ACA premium tax credits,
-and the diabetes name confusion above).
+## Evaluation
 
-A full threshold sweep across the cross-encoder's confidence score:
+113 questions in three sets (`eval/`, protocol in `eval/README.md`). The
+threshold was tuned on **dev** only. CI rebuilds the index and runs all
+three sets on every pull request.
 
-![Threshold sweep](docs/threshold_sweep.png)
+| Set | n | Accuracy | hit@5 | Refusal accuracy | Jurisdiction violations |
+|---|---:|---:|---:|---:|---:|
+| dev (tuning set) | 23 | 91.3% | 11/11 | 10/12 | 0 |
+| held-out | 60 | 100% | 54/54 | 6/6 | 0 |
+| adversarial | 30 | 70.0% | — | 21/30 | 0 |
 
-The result is an honest finding, not a clean win: **there is no broad safe
-operating region.** Overall accuracy peaks sharply at threshold = 0.01
-(91.3%) and immediately drops off in both directions — the optimum is a
-knife's edge between two failure clusters that a single scalar cannot
-separate:
+Details: [`eval/results/2026-10-23.md`](eval/results/2026-10-23.md).
 
-- Genuine answers to vaguely-phrased or synonym-mismatched questions
-  scored as low as 0.012 on the cross-encoder
-- Two disease-name near-misses (diabetes insipidus / diabetes mellitus
-  type 3c) scored 0.843–0.963 — the general-purpose cross-encoder
-  (`ms-marco-MiniLM-L-6-v2`, trained on web search relevance, not medical
-  entity disambiguation) cannot tell they're different diseases
+- **Jurisdiction and audience isolation held on all 113 questions.**
+- **Held-out retrieval is perfect but easy**: the corpus has 37 documents,
+  mostly one per topic.
+- **The weak point is near-miss refusal.** 9 of 30 adversarial questions
+  were answered instead of refused: pulmonary hypertension, hypotension,
+  kidney stones, chronic fatigue syndrome, sinus infection, appendicitis
+  and hepatitis C guidelines, an ibuprofen interaction, and asthma in
+  horses. On the dev set, *diabetes insipidus* and *diabetes mellitus type
+  3c* fail the same way (cross-encoder scores 0.84–0.96). The
+  general-domain cross-encoder scores topical overlap highly, and no single
+  threshold separates these from genuine low-scoring answers. A
+  medical-domain reranker or an entity-disambiguation step is the likely
+  fix.
 
-This is documented as a known, accepted limitation rather than tuned away:
-a medical-domain-specific reranker or an NLI-based entity-disambiguation
-step would be the real fix, and is out of scope for this iteration.
+![Threshold sweep on the dev set](docs/threshold_sweep.png)
 
 ## Quick start (Docker Compose)
 
@@ -140,95 +111,94 @@ curl -X POST localhost:8000/query -H 'content-type: application/json' \
      -d '{"question": "does Medicare cover insulin", "jurisdiction": "CA"}'
 ```
 
-This starts Redis, a Qdrant server, a one-shot indexer that builds the
-index from the committed `data/processed/` files, and the API. Runtime
-settings (Qdrant/Redis URLs, gate thresholds) are environment variables
-documented in `settings.py`.
+Starts Redis, a Qdrant server, a one-shot indexer that builds the index
+from the committed `data/processed/`, and the API. CI runs the same stack
+and checks a grounded answer, a refusal and a cache hit.
 
-## Setup (without Docker)
+## Local development
 
-```powershell
-pip install -r requirements.txt
-```
+```bash
+pip install -r requirements.txt          # pulls torch for the cross-encoder
+docker run -d -p 6379:6379 redis          # optional; or CACHE_ENABLED=false
 
-`sentence-transformers` pulls in `torch` and is the heaviest install in
-the chain — expect it to take noticeably longer than the rest.
-
-Get a free NCBI API key (optional, raises the PubMed rate limit from 3 to
-10 req/sec): https://www.ncbi.nlm.nih.gov/account/
-
-```powershell
-$env:NCBI_API_KEY="your_key_here"
-```
-
-Start Redis (used for query caching):
-```powershell
-docker run -p 6379:6379 redis
-```
-
-## Running the pipeline
-
-```powershell
-# 1. Ingest (each is independent; run whichever sources you need)
-python fetch_medlineplus.py
-python fetch_pubmed.py
-python fetch_cms.py
-python fetch_state_insurance.py    # pages listed in config/state_pages.toml
-python load_manual_pages.py        # for sources that block scripted fetches (see script docstring)
-
-# 2. Build the unified corpus, chunk it, embed and index
 python build_corpus.py
 python chunk_corpus.py
 python embed_and_index.py
+python -m uvicorn api.main:app --port 8000
 
-# 3. Serve
-python -m uvicorn api.main:app --reload --port 8000
-
-# 4. Evaluate
-python run_eval.py
+python run_eval.py                         # all three eval sets
 ```
 
-## API usage
+Settings (Qdrant URL or path, Redis URL, thresholds) are environment
+variables listed in `settings.py`.
 
-```powershell
-Invoke-RestMethod -Uri "http://localhost:8000/query" -Method Post `
-  -ContentType "application/json" `
-  -Body '{"question": "does Medicare cover insulin", "audience": "patient", "jurisdiction": "CA"}'
+### Refreshing source data
+
+```bash
+python fetch_medlineplus.py
+python fetch_pubmed.py                    # NCBI_API_KEY optional, raises rate limit
+python fetch_cms.py
+python fetch_state_insurance.py           # pages listed in config/state_pages.toml
+python load_manual_pages.py               # for pages that block scripted fetches
+# then rebuild the index and invalidate the affected jurisdictions:
+python invalidate_jurisdiction.py federal
 ```
 
-Response includes `answer_grounded`, full source citations (`url`,
-`title`, `jurisdiction`, `effective_date`), `cache_hit`, and both raw
-confidence signals (`top_vector_score`, `top_cross_encoder_score`) for
-debugging/eval purposes.
+## Tests
+
+```bash
+pip install pytest httpx
+pytest tests -v                           # 39 tests, no model download
+RUN_MODEL_TESTS=1 pytest tests/test_models.py -v
+```
+
+Unit and API tests use the real Qdrant (in-memory), BM25, RRF, cache
+(fakeredis) and FastAPI code with stand-in embedding and reranking models.
+Model tests load the real models; the insipidus/mellitus confusion is a
+strict expected failure that will flag if a model change fixes it.
+
+## API
+
+`POST /query`
+
+```json
+{"question": "does Medicare cover insulin", "audience": "patient", "jurisdiction": "CA", "top_k": 5}
+```
+
+Returns `answer_grounded`, `sources` (text, title, url, jurisdiction,
+audience, effective_date, score), `cache_hit`, and the raw
+`top_vector_score` and `top_cross_encoder_score`. Refusals carry a
+`message` and no sources.
 
 ## Project structure
 
 ```
-common.py                    Shared rate limiting, disk caching, robots.txt checks
-fetch_*.py                   Per-source ingestion scripts
-load_manual_pages.py         Loader for sources that block scripted fetches
-build_corpus.py              Consolidates all sources into one corpus.jsonl
-chunk_corpus.py              Paragraph-aware chunking
-embed_and_index.py           FastEmbed + Qdrant indexing
-hybrid_search.py             BM25 index + Reciprocal Rank Fusion
-reranker.py                  Cross-encoder reranking
-query_cache.py               Redis caching with generation/schema-versioned keys
-invalidate_jurisdiction.py   CLI to bump a jurisdiction's cache generation
-api/main.py                  FastAPI serving layer
-eval/                        Dev, held-out and adversarial question sets
-run_eval.py                  Eval harness: hit@k, MRR, violation checks, threshold sweep data
-docs/threshold_sweep.png     Confidence-gate threshold sweep chart
+api/main.py                  FastAPI endpoint, gating, caching
+settings.py                  environment-based configuration
+hybrid_search.py             BM25 index and Reciprocal Rank Fusion
+reranker.py                  cross-encoder reranking
+query_cache.py               Redis cache with generation and schema keys
+invalidate_jurisdiction.py   bump a jurisdiction's cache generation
+fetch_*.py, load_manual_pages.py, common.py   ingestion
+build_corpus.py, chunk_corpus.py, embed_and_index.py   indexing
+config/state_pages.toml      state insurance sources
+eval/                        dev, held-out, adversarial sets and results
+run_eval.py                  evaluation harness
+tests/                       unit, API and model tests
 ```
 
 ## Known limitations
 
-- Cross-encoder reranking cannot distinguish medically-distinct conditions
-  that share vocabulary (see eval findings above) — would need a
-  domain-specific or NLI-based reranker to fully close.
-- State insurance coverage is currently CA/TX/FL only; extending to more
-  states means finding and verifying real consumer-guide URLs per state
-  (`fetch_state_insurance.py` has no unified API to pull from).
-- No LLM generation/synthesis step — the endpoint returns grounded source
-  excerpts directly rather than a paraphrased answer, a deliberate scope
-  choice so "grounding" stays literal rather than something that could
-  drift from the source during generation.
+- Near-miss questions are often answered instead of refused (see
+  Evaluation).
+- The corpus is small: 8 MedlinePlus topics, 24 PubMed abstracts, 3
+  Medicare/HHS pages, and one consumer guide each for CA, TX and FL.
+- Two PubMed abstracts in the clinician corpus are veterinary (feline
+  kidney disease, feline diabetes), one PubMed record has an empty
+  abstract, and the MedlinePlus "heart disease" page is the Heart Valve
+  Diseases page.
+- No generation step: answers are source excerpts, not synthesized prose.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
